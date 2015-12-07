@@ -17,10 +17,10 @@ def iter_raw_eia_brent_fob():
     # TODO: this function must return data from EIA on Brent FOB Price, retrieved from SOURCE_URL 
     #       result must pass test_iter()
     
-    # Download data from SOURCE_URL to xml_doc
+    # Download data from SOURCE_URL to xml_doc - maybe using urllib2
     # 
     
-    # Parse xml_doc and emit values 
+    # Parse xml_doc and emit values - maybe using xmltodict
     # ...
     
     # stub
@@ -37,3 +37,16 @@ def test_iter():
     
 if __name__ == "__main__":
     test_iter()
+    
+"""Suggested code:
+
+import urllib2
+import xmltodict
+def homepage(request):
+    file = urllib2.urlopen('http://api.eia.gov/series/?api_key=15C0821C54636C57209B84FEEE3CE654&series_id=PET.RBRTE.D')
+    data = file.read()
+    file.close()
+    data = xmltodict.parse(data)
+    return render_to_response('my_template.html', {'data': data})
+    
+"""
