@@ -22,21 +22,13 @@ def get_restful_data(url = SOURCE_URL):
     with urlopen(url) as f:
         url_data = f.read().decode()
     return url_data 
- 
-def parse_as_json_and_iterate(url_data):
-    # Parse url_data and emit values
-    json_data = json.loads(url_data)    
-    for x in json_data["series"][0]["data"]:
-        yield x
-
-# NOTE: may also use lxml or xmltodict for parsing, eg:
-# import xmltodict
-# data = xmltodict.parse(data)"""
 
 def parse(url_data):
-    """Returns a list of timeseries values (timestamp, value)"""
-    return list(parse_as_json_and_iterate(url_data)) 
-    # NOTE: may also apply sorting here
+    """Returns a list of time series values from API output"""
+    # NOTE: may also use lxml or xmltodict for parsing
+    json_data = json.loads(url_data)    
+    # NOTE: may also apply sorting here, because newest dates appear first in this list. 
+    return json_data["series"][0]["data"]
     
 def raw_eia_brent_fob():
     """Yeilds data data from EIA on Brent FOB Price retrieved from SOURCE_URL
@@ -60,9 +52,9 @@ def check_values_from_eia_brent_fob(list_):
     
 def test_iter():
     # urlopen() fails behind firewall, so I test only the XML/JSON parser
-    # gen = raw_eia_brent_fob()
-    gen = raw_eia_brent_fob_local_copy()
-    check_values_from_eia_brent_fob(gen)
+    # list_ = raw_eia_brent_fob()
+    list_ = raw_eia_brent_fob_local_copy()
+    check_values_from_eia_brent_fob(list_)
     
 if __name__ == "__main__":
     test_iter()
