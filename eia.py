@@ -30,8 +30,19 @@ def convert_to_date(date_string):
     day = int(date_string[6:])
     return datetime.date(year, month, day)
 
-def convert_to_pandas_series():
-    pass
+def convert_to_pandas_series(raw_data):
+    if not raw_data:
+        raise ValueError("Invalid data parameter!")
+
+    data_dict = {}
+    for raw_data_item in raw_data:
+        date = raw_data_item[0]
+        price = raw_data_item[1]
+
+        data_dict[date] = price
+
+    data_series = pandas.Series(data_dict)
+    return data_series
 
 # ----------------------------
 #   For reference:
