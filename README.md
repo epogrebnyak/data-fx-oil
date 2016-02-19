@@ -14,8 +14,8 @@ Todo:
 0. transform data into period-average and end-of-period datapoint at annual, quarterly and monthly frequencies
 0. add tests checking transformation 
 
-0. store two time series (period average and end-of-period price) in csv files as in
-- <https://github.com/epogrebnyak/rosstat-kep-data/tree/master/output> - responsible code is 
-- <https://github.com/epogrebnyak/rosstat-kep-data/blob/master/kep/getter/dataframes.py#L131>
+0. store two time series (period average and end-of-period price) in csv files as in 
+ [rosstat-kep-data](https://github.com/epogrebnyak/rosstat-kep-data/tree/master/output) (responsible code is 
+ [here](https://github.com/epogrebnyak/rosstat-kep-data/blob/master/kep/getter/dataframes.py#L131) )
 
 0. demonstrate ability to generalise procedure to other tickers/commodities
