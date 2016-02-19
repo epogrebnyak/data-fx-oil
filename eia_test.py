@@ -35,12 +35,7 @@ def test_iter(hardcoded_data):
     check_values_from_eia_brent_fob(hardcoded_data)
 
 def test_convert_to_date_object():
-    test_string = "20150115"
-    date_object = datetime.date(2015,1,15)
-    function_res = convert_to_date(test_string)
-
-    assert date_object == function_res
-    print("Test passed OK.")
+    assert convert_to_date("20150115") == fudatetime.date(2015,1,15)
 
 def test_convert_to_pandas_series_hardcoded(hardcoded_data):
     """Tests the conversion of the hardcoded json data to pandas series."""

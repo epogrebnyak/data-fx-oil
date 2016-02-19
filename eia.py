@@ -5,13 +5,10 @@ import json
 import pandas
 import datetime
 
-SOURCE_URL = "http://api.eia.gov/series/?api_key=15C0821C54636C57209B84FEEE3CE654&series_id=PET.RBRTE.D"
+BRENT_URL = "http://api.eia.gov/series/?api_key=15C0821C54636C57209B84FEEE3CE654&series_id=PET.RBRTE.D"
 
-PERIOD_MONTH = 'month'
-PERIOD_YEAR = 'year'
-PERIOD_QUARTER = 'quarter'
-
-def get_restful_data(url = SOURCE_URL):
+def get_restful_data(url):
+    """Retrieves data from URL"""
     with urlopen(url) as f:
         url_data = f.read().decode()
     return url_data 
@@ -19,59 +16,82 @@ def get_restful_data(url = SOURCE_URL):
 def parse(url_data):
     """Returns a list of time series values from API output"""
     json_data = json.loads(url_data)    
-    # NOTE: may also apply sorting here, because newest dates appear first in this list. 
     return json_data["series"][0]["data"]
     
 def raw_eia_brent_fob():
-    """Yeilds data data from EIA on Brent FOB Price retrieved from SOURCE_URL
-       Passes test_iter()"""
-    url_data = get_restful_data()
+    """Yeilds data data from EIA on Brent FOB Price retrieved from BRENT_URL"""    
+    url_data = get_restful_data(BRENT_URL)
     return parse(url_data)
 
-def convert_to_date(date_string):
-    year = int(date_string[0:4])
-    month = int(date_string[4:6])
-    day = int(date_string[6:])
-    return datetime.date(year, month, day)
+def string_to_date(date_string):
+    # string_to_date("20150115") == datetime.date(2015,1,15)    
+    return datetime.datetime.strptime(date_string, "%Y%m%d").date()    
 
-def convert_to_pandas_series(raw_data):
-    if not raw_data:
-        raise ValueError("Invalid data parameter!")
+def yield_tuples(flat_list):
+    for row in flat_list:
+        date = string_to_date(row[0])
+        price = row[1]
+        yield date, price
+    
+def as_series(flat_list):
+    # maybe there is shorter notation for unpacking below 
+    data_dict = dict((date, price) for date, price in yield_tuples(flat_list))
+    return pandas.Series(data_dict)  
 
-    data_dict = {}
-    for raw_data_item in raw_data:
-        date_str = raw_data_item[0]
-        date = convert_to_date(date_str)
-        price = raw_data_item[1]
+def get_brent():
+    return as_series(raw_eia_brent_fob())
+    
+if __name__ == "__main__":    
+    assert string_to_date("20150115") == datetime.date(2015,1,15)    
+    # todo: write some key asserts from eia_test.py here, they should address functions above (issue #5,6)
+    
+    brent = get_brent()
+    
+    
+    # todo: write expressions for variables below (issue #7), do not make functions yet
+    
+    # brent_a_eop = 
+    # brent_q_eop = 
+    # brent_m_eop = 
+    
+    # brent_a_avg = 
+    # brent_q_avg = 
+    # brent_m_avg = 
+    
+    
 
-        data_dict[date] = price
+    PERIOD_MONTH = 'month'
+    PERIOD_YEAR = 'year'
+    PERIOD_QUARTER = 'quarter'
 
-    data_series = pandas.Series(data_dict)
-    return data_series
+        
+    def eia_brent_fob_period_average(data, period):
+        d_frame = pandas.DataFrame({'brent fob': data})
+        d_frame.index = pandas.DatetimeIndex(d_frame.index)
 
-def eia_brent_fob_period_average(data, period):
-    d_frame = pandas.DataFrame({'brent fob': data})
-    d_frame.index = pandas.DatetimeIndex(d_frame.index)
+        if period == PERIOD_MONTH:
+            d_frame = d_frame.resample('M')
+            d_frame = d_frame.set_index(d_frame.index.to_period('M'))
+            d_frame.to_csv('monthly_average.csv', index_label='month')
+        elif period == PERIOD_YEAR:
+            d_frame = d_frame.resample('12M')
+            d_frame = d_frame.set_index(d_frame.index.year)
+            d_frame.to_csv('yearly_average.csv', index_label='year')
+        elif period == PERIOD_QUARTER:
+            d_frame = d_frame.resample('Q')
+            d_frame = d_frame.set_index(d_frame.index.to_period('M'))
+            d_frame.to_csv('quarter_average.csv', index_label='quarter')
+        else:
+            raise ValueError("The period parameter should be 'month', 'year' or 'quarter'")
 
-    if period == PERIOD_MONTH:
-        d_frame = d_frame.resample('M')
-        d_frame = d_frame.set_index(d_frame.index.to_period('M'))
-        d_frame.to_csv('monthly_average.csv', index_label='month')
-    elif period == PERIOD_YEAR:
-        d_frame = d_frame.resample('12M')
-        d_frame = d_frame.set_index(d_frame.index.year)
-        d_frame.to_csv('yearly_average.csv', index_label='year')
-    elif period == PERIOD_QUARTER:
-        d_frame = d_frame.resample('Q')
-        d_frame = d_frame.set_index(d_frame.index.to_period('M'))
-        d_frame.to_csv('quarter_average.csv', index_label='quarter')
-    else:
-        raise ValueError("The period parameter should be 'month', 'year' or 'quarter'")
-
-    return d_frame
-
+        return d_frame
+        
+        
+    
+    
+    
 # ----------------------------
-#   For reference:
+#   JSON output reference
 # ----------------------------
 
 """Sample output (whitespaces added below for readability). From http://www.eia.gov/opendata/commands.cfm#series_query
