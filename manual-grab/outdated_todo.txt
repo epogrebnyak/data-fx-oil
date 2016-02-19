@@ -1,0 +1,12 @@
+17:03 16.04.2015
+use 'mold' to create sop/avg/eop data
+plotting
+saving/reading from csv/zoo file
+
+12:10 14.05.2015
+done - saving to csv file 
+ep_temp_1.xls with some plots (prototype)
+
+
+
+ 
