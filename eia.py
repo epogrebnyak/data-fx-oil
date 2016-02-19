@@ -23,20 +23,6 @@ def raw_eia_brent_fob():
        Passes test_iter()"""
     url_data = get_restful_data()
     return parse(url_data)
-
-"""def convert_to_date(pair):
-    date_string = pair[0]
-    year = int(date_string[0:4])
-    mounth = int(date_string[4:6])
-    day = int(date_string[6:])
-    return [datetime.date(year, mounth, day), pair[1]]
-
-
-data_list = raw_eia_brent_fob()
-data_list = list(map(convert_to_date, data_list))
-
-data = pandas.Series(data_list)
-print (data)"""
     
 
 # ----------------------------
