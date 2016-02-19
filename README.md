@@ -1,11 +1,12 @@
 Data import and transormation
 -----------------------------
 
-Existing data import: [eia.py](https://github.com/epogrebnyak/fx-oil/blob/master/eia.py)
+### Assets
 
+Existing data import: [eia.py](https://github.com/epogrebnyak/fx-oil/blob/master/eia.py) 
 Some data transformation code in R: [import_data.R](https://github.com/epogrebnyak/fx-oil/blob/master/manual-grab/import_data.R)
 
-Todo:
+###Todo
 
 1 separate eia.py into code and (py.test) test (= functions with assert)  
 2 demostrate import test is passing
