@@ -31,4 +31,5 @@ def convert_to_date_object_test():
 
 
 if __name__ == "__main__":
+    convert_to_date_object_test()
     test_iter()

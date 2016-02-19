@@ -23,7 +23,15 @@ def raw_eia_brent_fob():
        Passes test_iter()"""
     url_data = get_restful_data()
     return parse(url_data)
-    
+
+def convert_to_date(date_string):
+    year = int(date_string[0:4])
+    month = int(date_string[4:6])
+    day = int(date_string[6:])
+    return datetime.date(year, month, day)
+
+def convert_to_pandas_series():
+    pass
 
 # ----------------------------
 #   For reference:
