@@ -7,6 +7,10 @@ import datetime
 
 SOURCE_URL = "http://api.eia.gov/series/?api_key=15C0821C54636C57209B84FEEE3CE654&series_id=PET.RBRTE.D"
 
+PERIOD_MONTH = 'month'
+PERIOD_YEAR = 'year'
+PERIOD_QUARTER = 'quarter'
+
 def get_restful_data(url = SOURCE_URL):
     with urlopen(url) as f:
         url_data = f.read().decode()
@@ -36,13 +40,35 @@ def convert_to_pandas_series(raw_data):
 
     data_dict = {}
     for raw_data_item in raw_data:
-        date = raw_data_item[0]
+        date_str = raw_data_item[0]
+        date = convert_to_date(date_str)
         price = raw_data_item[1]
 
         data_dict[date] = price
 
     data_series = pandas.Series(data_dict)
     return data_series
+
+def eia_brent_fob_period_average(data, period):
+    d_frame = pandas.DataFrame({'brent fob': data})
+    d_frame.index = pandas.DatetimeIndex(d_frame.index)
+
+    if period == PERIOD_MONTH:
+        d_frame = d_frame.resample('M')
+        d_frame = d_frame.set_index(d_frame.index.to_period('M'))
+        d_frame.to_csv('monthly_average.csv', index_label='month')
+    elif period == PERIOD_YEAR:
+        d_frame = d_frame.resample('12M')
+        d_frame = d_frame.set_index(d_frame.index.year)
+        d_frame.to_csv('yearly_average.csv', index_label='year')
+    elif period == PERIOD_QUARTER:
+        d_frame = d_frame.resample('Q')
+        d_frame = d_frame.set_index(d_frame.index.to_period('M'))
+        d_frame.to_csv('quarter_average.csv', index_label='quarter')
+    else:
+        raise ValueError("The period parameter should be 'month', 'year' or 'quarter'")
+
+    return d_frame
 
 # ----------------------------
 #   For reference:

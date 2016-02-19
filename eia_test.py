@@ -1,4 +1,4 @@
-from eia import convert_to_date, parse, convert_to_pandas_series, raw_eia_brent_fob
+from eia import *
 import datetime
 import pytest
 
@@ -47,17 +47,27 @@ def test_convert_to_pandas_series_hardcoded(hardcoded_data):
     series_data = convert_to_pandas_series(hardcoded_data)
     # check if the date strings from TEST_VALUES are in the index list of the series.
     for test_val in TEST_VALUES:
-        assert test_val[0] in series_data.index
+        assert convert_to_date(test_val[0]) in series_data.index
 
 def test_convert_to_pandas_series_restful(eia_brent_fob_data):
     """Tests the conversion of the restful data retreived from the internet."""
     series_data = convert_to_pandas_series(eia_brent_fob_data)
     for test_val in REST_VALUES:
-        assert test_val[0] in series_data.index
+        assert convert_to_date(test_val[0]) in series_data.index
 
 def test_convert_to_pandas_series_param_none():
     with pytest.raises(ValueError):
         convert_to_pandas_series(None)
+
+def test_eia_brent_fob_period_average(hardcoded_data):
+    eia_brent_fob_series = convert_to_pandas_series(hardcoded_data)
+    assert eia_brent_fob_period_average(eia_brent_fob_series, PERIOD_YEAR).iloc[0,0] == 18.54
+    assert eia_brent_fob_period_average(eia_brent_fob_series, PERIOD_MONTH)[-1:].iloc[0,0] == 42.97
+    assert eia_brent_fob_period_average(eia_brent_fob_series, PERIOD_QUARTER).iloc[0,0] == 18.54
+
+def test_eia_brent_fob_period_average_invalid_period():
+    with pytest.raises(ValueError):
+        eia_brent_fob_period_average(None, 'invalid period label')
 
 if __name__ == "__main__":
     convert_to_date_object_test()
