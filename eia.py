@@ -25,7 +25,7 @@ def raw_eia_brent_fob():
 
 def string_to_date(date_string):
     # string_to_date("20150115") == datetime.date(2015,1,15)    
-    return datetime.datetime.strptime(date_string, "%Y%m%d").date()    
+    return datetime.datetime.strptime(date_string, "%Y%m%d").date() 
 
 def yield_tuples(flat_list):
     for row in flat_list:
@@ -41,11 +41,12 @@ def as_series(flat_list):
 def get_brent():
     return as_series(raw_eia_brent_fob())
     
-if __name__ == "__main__":    
+if __name__ == "__main__":   
+ 
     assert string_to_date("20150115") == datetime.date(2015,1,15)    
-    # todo: write some key asserts from eia_test.py here, they should address functions above (issue #5,6)
+    # todo: write some key asserts from eia_test.py here, they should address functions above (issue #5, #6)
     
-    brent = get_brent()
+    daily_brent = get_brent()
     
     
     # todo: write expressions for variables below (issue #7), do not make functions yet
@@ -90,9 +91,9 @@ if __name__ == "__main__":
     
     
     
-# ----------------------------
+# ----------------------------------------------------------------------------------------------------------------
 #   JSON output reference
-# ----------------------------
+# ----------------------------------------------------------------------------------------------------------------
 
 """Sample output (whitespaces added below for readability). From http://www.eia.gov/opendata/commands.cfm#series_query
 
