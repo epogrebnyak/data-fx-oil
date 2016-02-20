@@ -2,26 +2,24 @@
 
 from urllib.request import urlopen
 import json
-import pandas
+import pandas as pd
 import datetime
 
-BRENT_URL = "http://api.eia.gov/series/?api_key=15C0821C54636C57209B84FEEE3CE654&series_id=PET.RBRTE.D"
+ACCESS_KEY = "15C0821C54636C57209B84FEEE3CE654"
+
+def series_url(id, key = ACCESS_KEY):
+    return "http://api.eia.gov/series/?api_key={0}&series_id={1}".format(key, id)    
 
 def get_restful_data(url):
-    """Retrieves data from URL"""
+    """Retrieves data from URL"""    
     with urlopen(url) as f:
         url_data = f.read().decode()
     return url_data 
 
-def parse(url_data):
+def parse_json(url_data):
     """Returns a list of time series values from API output"""
     json_data = json.loads(url_data)    
     return json_data["series"][0]["data"]
-    
-def raw_eia_brent_fob():
-    """Yeilds data data from EIA on Brent FOB Price retrieved from BRENT_URL"""    
-    url_data = get_restful_data(BRENT_URL)
-    return parse(url_data)
 
 def string_to_date(date_string):
     # string_to_date("20150115") == datetime.date(2015,1,15)    
@@ -34,22 +32,35 @@ def yield_tuples(flat_list):
         yield date, price
     
 def as_series(flat_list):
-    # maybe there is shorter notation for unpacking below 
-    data_dict = dict((date, price) for date, price in yield_tuples(flat_list))
-    return pandas.Series(data_dict)  
+    data_dict = dict((pd.to_datetime(date), price) for date, price in yield_tuples(flat_list))
+    return pd.Series(data_dict)  
 
-def get_brent():
-    return as_series(raw_eia_brent_fob())
+def get_ticker(id):
+    url = series_url(id)
+    raw_data = get_restful_data(url)
+    flat_list = parse_json(raw_data)
+    return as_series(flat_list)
     
-if __name__ == "__main__":   
- 
+def get_daily_brent():
+    return get_ticker("PET.RBRTE.D")
+
+    
+if __name__ == "__main__":
+
+    BRENT_URL = "http://api.eia.gov/series/?api_key=15C0821C54636C57209B84FEEE3CE654&series_id=PET.RBRTE.D"
+    assert series_url("PET.RBRTE.D") == BRENT_URL    
+
     assert string_to_date("20150115") == datetime.date(2015,1,15)    
+    
     # todo: write some key asserts from eia_test.py here, they should address functions above (issue #5, #6)
     
-    daily_brent = get_brent()
     
     
+    daily_brent = get_daily_brent()
+    assert daily_brent['2016-02-16'] == 31.09
     # todo: write expressions for variables below (issue #7), do not make functions yet
+    # Note: PET.RBRTE.A and PET.RBRTE.M can be used for testing transformations of PET.RBRTE.D
+
     
     # brent_a_eop = 
     # brent_q_eop = 
@@ -92,8 +103,18 @@ if __name__ == "__main__":
     
     
 # ----------------------------------------------------------------------------------------------------------------
+#   API calls
+# ----------------------------------------------------------------------------------------------------------------
+
+#http://api.eia.gov/series/categories/?series_id=PET.RBRTE.D&api_key=15C0821C54636C57209B84FEEE3CE654
+#http://api.eia.gov/category/?api_key=15C0821C54636C57209B84FEEE3CE654&category_id=241335
+#http://api.eia.gov/category/?api_key=15C0821C54636C57209B84FEEE3CE654&category_id=714757
+
+
+# ----------------------------------------------------------------------------------------------------------------
 #   JSON output reference
 # ----------------------------------------------------------------------------------------------------------------
+
 
 """Sample output (whitespaces added below for readability). From http://www.eia.gov/opendata/commands.cfm#series_query
 
