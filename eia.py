@@ -7,48 +7,57 @@ import datetime
 
 ACCESS_KEY = "15C0821C54636C57209B84FEEE3CE654"
 
-def series_url(id, key = ACCESS_KEY):
-    return "http://api.eia.gov/series/?api_key={0}&series_id={1}".format(key, id)    
-
-def get_restful_data(url):
-    """Retrieves data from URL"""    
-    with urlopen(url) as f:
-        url_data = f.read().decode()
-    return url_data 
-
-def parse_json(url_data):
-    """Returns a list of time series values from API output"""
-    json_data = json.loads(url_data)    
-    return json_data["series"][0]["data"]
-
 def string_to_date(date_string):
-    # string_to_date("20150115") == datetime.date(2015,1,15)    
     return datetime.datetime.strptime(date_string, "%Y%m%d").date() 
-
-def yield_tuples(flat_list):
-    for row in flat_list:
-        date = string_to_date(row[0])
-        price = row[1]
-        yield date, price
+assert string_to_date("20150115") == datetime.date(2015,1,15)
     
-def as_series(flat_list):
-    data_dict = dict((pd.to_datetime(date), price) for date, price in yield_tuples(flat_list))
-    return pd.Series(data_dict)  
-
-def get_ticker(id):
-    url = series_url(id)
-    raw_data = get_restful_data(url)
-    flat_list = parse_json(raw_data)
-    return as_series(flat_list)
+class EIA():
     
+    def __init__(self, id):
+       self.url = self.series_url(id)
+       raw_data = self.get_restful_data(self.url)
+       flat_list = self.parse_json(raw_data)
+       self.Series = self.as_series(flat_list)        
+    
+    @staticmethod
+    def series_url(id, key = ACCESS_KEY):
+        return "http://api.eia.gov/series/?api_key={0}&series_id={1}".format(key, id)    
+
+    @staticmethod
+    def get_restful_data(url):
+        """Retrieves data from URL"""    
+        with urlopen(url) as f:
+            url_data = f.read().decode()
+        return url_data
+        
+    @staticmethod
+    def parse_json(url_data):
+        """Returns a list of time series values from API output"""
+        json_data = json.loads(url_data)    
+        return json_data["series"][0]["data"]
+
+    @staticmethod
+    def yield_tuples(flat_list):
+        for row in flat_list:
+            date = string_to_date(row[0])
+            price = row[1]
+            yield date, price
+
+    def as_series(self, flat_list):
+        data_dict = dict((pd.to_datetime(date), price) for date, price in self.yield_tuples(flat_list))
+        return pd.Series(data_dict)  
+        
+               
 def get_daily_brent():
-    return get_ticker("PET.RBRTE.D")
-
+    return EIA("PET.RBRTE.D").Series
     
 if __name__ == "__main__":
-
+    
+    s = EIA("PET.RBRTE.D").Series
+    #print(s.Series)
+    
     BRENT_URL = "http://api.eia.gov/series/?api_key=15C0821C54636C57209B84FEEE3CE654&series_id=PET.RBRTE.D"
-    assert series_url("PET.RBRTE.D") == BRENT_URL    
+    assert EIA("PET.RBRTE.D").url == BRENT_URL    
 
     assert string_to_date("20150115") == datetime.date(2015,1,15)    
     
@@ -56,8 +65,8 @@ if __name__ == "__main__":
     
     
     
-    daily_brent = get_daily_brent()
-    assert daily_brent['2016-02-16'] == 31.09
+    #daily_brent = get_daily_brent()
+    assert s['2016-02-16'] == 31.09
     # todo: write expressions for variables below (issue #7), do not make functions yet
     # Note: PET.RBRTE.A and PET.RBRTE.M can be used for testing transformations of PET.RBRTE.D
 
