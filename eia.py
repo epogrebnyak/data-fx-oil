@@ -9,8 +9,7 @@ ACCESS_KEY = "15C0821C54636C57209B84FEEE3CE654"
 
 def string_to_date(date_string):
     return datetime.datetime.strptime(date_string, "%Y%m%d").date() 
-assert string_to_date("20150115") == datetime.date(2015,1,15)
-    
+
 class EIA():
     
     def __init__(self, id):
@@ -47,69 +46,42 @@ class EIA():
         data_dict = dict((pd.to_datetime(date), price) for date, price in self.yield_tuples(flat_list))
         return pd.Series(data_dict)  
         
-               
-def get_daily_brent():
-    return EIA("PET.RBRTE.D").Series
-    
+# import daily, monthly and annual brent
+class DailyBrent(EIA):
+    def __init__(self):
+        super().__init__("PET.RBRTE.D")
+        
+class MonthlyBrent(EIA):
+    def __init__(self):
+        super().__init__("PET.RBRTE.M")
+
+class AnnualBrent(EIA):
+    def __init__(self):
+        super().__init__("PET.RBRTE.A")
+
+# QUESTION: can class instance itself be Series object?
+        
 if __name__ == "__main__":
     
-    s = EIA("PET.RBRTE.D").Series
-    #print(s.Series)
+    brent = DailyBrent().Series
+    assert brent['2016-02-16'] == 31.09
+    brent.to_csv('brent_daily.csv')
     
-    BRENT_URL = "http://api.eia.gov/series/?api_key=15C0821C54636C57209B84FEEE3CE654&series_id=PET.RBRTE.D"
-    assert EIA("PET.RBRTE.D").url == BRENT_URL    
+    
+    # http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling
+    #Any function available via dispatching can be given to the how parameter by name, including 
+    #sum, mean, std, sem, max, min, median, first, last, ohlc.
+    # brent.resample('M', how = 'mean')
+    # brent.resample('M', how = 'last')
+    
+    brent_a_avg = brent.resample('12M', how = 'mean')
+    brent_q_avg = brent.resample('Q', how = 'mean')
+    brent_m_avg = brent.resample('M', how = 'mean')
 
-    assert string_to_date("20150115") == datetime.date(2015,1,15)    
-    
-    # todo: write some key asserts from eia_test.py here, they should address functions above (issue #5, #6)
-    
-    
-    
-    #daily_brent = get_daily_brent()
-    assert s['2016-02-16'] == 31.09
-    # todo: write expressions for variables below (issue #7), do not make functions yet
-    # Note: PET.RBRTE.A and PET.RBRTE.M can be used for testing transformations of PET.RBRTE.D
-
-    
-    # brent_a_eop = 
-    # brent_q_eop = 
-    # brent_m_eop = 
-    
-    # brent_a_avg = 
-    # brent_q_avg = 
-    # brent_m_avg = 
-    
-    
-
-    PERIOD_MONTH = 'month'
-    PERIOD_YEAR = 'year'
-    PERIOD_QUARTER = 'quarter'
-
-        
-    def eia_brent_fob_period_average(data, period):
-        d_frame = pandas.DataFrame({'brent fob': data})
-        d_frame.index = pandas.DatetimeIndex(d_frame.index)
-
-        if period == PERIOD_MONTH:
-            d_frame = d_frame.resample('M')
-            d_frame = d_frame.set_index(d_frame.index.to_period('M'))
-            d_frame.to_csv('monthly_average.csv', index_label='month')
-        elif period == PERIOD_YEAR:
-            d_frame = d_frame.resample('12M')
-            d_frame = d_frame.set_index(d_frame.index.year)
-            d_frame.to_csv('yearly_average.csv', index_label='year')
-        elif period == PERIOD_QUARTER:
-            d_frame = d_frame.resample('Q')
-            d_frame = d_frame.set_index(d_frame.index.to_period('M'))
-            d_frame.to_csv('quarter_average.csv', index_label='quarter')
-        else:
-            raise ValueError("The period parameter should be 'month', 'year' or 'quarter'")
-
-        return d_frame
-        
-        
-    
-    
+    # WARNING: always labels with last day of month, irrespective of whether business day of nor, scaps actual last avialable day in month  
+    brent_a_eop = brent.resample('12M', how = 'last')
+    brent_q_eop = brent.resample('Q', how = 'last')
+    brent_m_eop = brent.resample('M', how = 'last')
     
 # ----------------------------------------------------------------------------------------------------------------
 #   API calls
