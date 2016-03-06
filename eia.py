@@ -15,8 +15,8 @@ class EIA():
     def __init__(self, id):
        self.url = self.series_url(id)
        raw_data = self.get_restful_data(self.url)
-       flat_list = self.parse_json(raw_data)
-       self.Series = self.as_series(flat_list)        
+       datapoints = self.parse_json(raw_data)
+       self.series = self.as_series(datapoints)        
     
     @staticmethod
     def series_url(id, key = ACCESS_KEY):
@@ -59,18 +59,24 @@ class AnnualBrent(EIA):
     def __init__(self):
         super().__init__("PET.RBRTE.A")
 
-# QUESTION: can class instance itself be Series object?
+# QUESTION: can class instance itself be Series object allowing: 
+#    brent = DailyBrent()
+
+# Need following wrapper class:
+# brent = DailyBrent().series # df[df.columns[0]]
+# df = DailyBrent().df     # get_saved_er()
+# DailyBrent().update()
         
 if __name__ == "__main__":
     
-    brent = DailyBrent().Series
+    brent = DailyBrent().series
     assert brent['2016-02-16'] == 31.09
     brent.to_csv('brent_daily.csv')
     
     
     # http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling
-    #Any function available via dispatching can be given to the how parameter by name, including 
-    #sum, mean, std, sem, max, min, median, first, last, ohlc.
+    # Any function available via dispatching can be given to the how parameter by name, including 
+    # sum, mean, std, sem, max, min, median, first, last, ohlc.
     # brent.resample('M', how = 'mean')
     # brent.resample('M', how = 'last')
     
@@ -78,10 +84,16 @@ if __name__ == "__main__":
     brent_q_avg = brent.resample('Q', how = 'mean')
     brent_m_avg = brent.resample('M', how = 'mean')
 
-    # WARNING: always labels with last day of month, irrespective of whether business day of nor, scaps actual last avialable day in month  
+    # WARNING: labels with last day of month, irrespective of whether business day of nor, 
+    #          information about last actual reported day in month is lost
+    
     brent_a_eop = brent.resample('12M', how = 'last')
     brent_q_eop = brent.resample('Q', how = 'last')
     brent_m_eop = brent.resample('M', how = 'last')
+
+
+
+
     
 # ----------------------------------------------------------------------------------------------------------------
 #   API calls
