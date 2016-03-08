@@ -1,6 +1,5 @@
 """ Download USD RUR exchange rate from Bank of Russia web site."""
 
-from urllib.request import urlopen
 import json
 import pandas as pd
 import datetime
@@ -109,7 +108,7 @@ def update():
     update_xml()
     df = get_saved_er()
     ts = df[df.columns[0]]
-    # note: had problems with rounding   
+    # note: had problems with rounding, er and ts are at this point rounded to 4 digits   
     assert er.equals(ts)
 
     

@@ -1,99 +1,164 @@
 """ Download Brent FOB price time series from EIA API. """
 
-from urllib.request import urlopen
+
+#### Critical:
+
+# Brent.annual() not correct, must be comparable to AnnualBrent()
+# Brent.monthly() must be comparable to MonthlyBrent().series
+
+#### Not critical: 
+
+# QUESTION: can class instance itself be Series object allowing ```brent = DailyBrent()```
+
+
+#from urllib.request import urlopen
 import json
 import pandas as pd
 import datetime
+import requests
 
 ACCESS_KEY = "15C0821C54636C57209B84FEEE3CE654"
 
-def string_to_date(date_string):
-    return datetime.datetime.strptime(date_string, "%Y%m%d").date() 
+FILENAME_DICT = {'PET.RBRTE.D': 'brent_daily.txt'
+               , 'PET.RBRTE.M': 'brent_monthly.txt'
+               , 'PET.RBRTE.A': 'brent_annual.txt'}
 
+
+def __string_to_date__(date_string, fmt):
+    return datetime.datetime.strptime(date_string, fmt).date() 
+               
+               
 class EIA():
-    
+
+    def update(self):
+       self.url = self.make_url(self.id)
+       gen = self.yield_json_data(self.url)
+       self.series = self.as_series(gen)
+       self.save_csv()
+       
     def __init__(self, id):
-       self.url = self.series_url(id)
-       raw_data = self.get_restful_data(self.url)
-       datapoints = self.parse_json(raw_data)
-       self.series = self.as_series(datapoints)        
-    
+        self.id = id
+        try:
+            self.load_saved_series()
+        except:
+            print("Cannot load from file: " + self.filename)
+       
     @staticmethod
-    def series_url(id, key = ACCESS_KEY):
+    def make_url(id, key = ACCESS_KEY):
+        """Valid API URL for *id* like 'PET.RBRTE.D' """
         return "http://api.eia.gov/series/?api_key={0}&series_id={1}".format(key, id)    
 
     @staticmethod
-    def get_restful_data(url):
-        """Retrieves data from URL"""    
-        with urlopen(url) as f:
-            url_data = f.read().decode()
-        return url_data
+    def string_to_date(date_string):
+        return __string_to_date__(date_string, "%Y%m%d") 
+        
+    def yield_json_data(self, url):
+        """Stream data from url as pairs of date and values"""
+        r = requests.get(url)
+        json_data = json.loads(r.text)    
+        parsed_json_data = json_data["series"][0]["data"]
+        for row in parsed_json_data:
+            date = self.string_to_date(row[0])
+            price = float(row[1])
+            yield pd.to_datetime(date), float(price)
         
     @staticmethod
-    def parse_json(url_data):
-        """Returns a list of time series values from API output"""
-        json_data = json.loads(url_data)    
-        return json_data["series"][0]["data"]
+    def as_series(gen):
+        data_dicts = dict((date, price) for date, price in gen)
+        return pd.Series(data_dicts)  
+    
+    @property
+    def filename(self):        
+        if self.id in FILENAME_DICT.keys():
+           return FILENAME_DICT[self.id]
+        else:
+           return self.id + ".txt"
+    
+    def save_csv(self):
+        self.series.to_csv(self.filename)
 
-    @staticmethod
-    def yield_tuples(flat_list):
-        for row in flat_list:
-            date = string_to_date(row[0])
-            price = row[1]
-            yield date, price
+    def get_saved_df(self):
+        df = pd.read_csv(self.filename, index_col = 0) 
+        df.index = pd.to_datetime(df.index)
+        return df.round(2)
 
-    def as_series(self, flat_list):
-        data_dict = dict((pd.to_datetime(date), price) for date, price in self.yield_tuples(flat_list))
-        return pd.Series(data_dict)  
+    def load_saved_series(self):
+        df = self.get_saved_df()
+        self.series = df[df.columns[0]]
+        return self.series  
         
 # import daily, monthly and annual brent
-class DailyBrent(EIA):
+class Brent(EIA):
     def __init__(self):
         super().__init__("PET.RBRTE.D")
+
+    def daily(self):
+        return self.series
         
-class MonthlyBrent(EIA):
-    def __init__(self):
-        super().__init__("PET.RBRTE.M")
-
-class AnnualBrent(EIA):
-    def __init__(self):
-        super().__init__("PET.RBRTE.A")
-
-# QUESTION: can class instance itself be Series object allowing: 
-#    brent = DailyBrent()
-
-# Need following wrapper class:
-# brent = DailyBrent().series # df[df.columns[0]]
-# df = DailyBrent().df     # get_saved_er()
-# DailyBrent().update()
-        
-if __name__ == "__main__":
-    
-    brent = DailyBrent().series
-    assert brent['2016-02-16'] == 31.09
-    brent.to_csv('brent_daily.csv')
+    def __eop_or_avg__(self, eop:bool, ltr:str):
+        if eop:
+            return self.series.resample(ltr, how = 'last')
+        else:
+            return self.series.resample(ltr, how = 'mean')
     
     
     # http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling
     # Any function available via dispatching can be given to the how parameter by name, including 
     # sum, mean, std, sem, max, min, median, first, last, ohlc.
-    # brent.resample('M', how = 'mean')
-    # brent.resample('M', how = 'last')
-    
-    brent_a_avg = brent.resample('12M', how = 'mean')
-    brent_q_avg = brent.resample('Q', how = 'mean')
-    brent_m_avg = brent.resample('M', how = 'mean')
-
+    #
     # WARNING: labels with last day of month, irrespective of whether business day of nor, 
     #          information about last actual reported day in month is lost
     
-    brent_a_eop = brent.resample('12M', how = 'last')
-    brent_q_eop = brent.resample('Q', how = 'last')
-    brent_m_eop = brent.resample('M', how = 'last')
+    def monthly(self, eop = False):
+        return self.__eop_or_avg__(eop, "M")
+    
+    def quarterly(self, eop = False):
+        return self.__eop_or_avg__(eop, "Q")
+    
+    def annual(self, eop = False):
+        return self.__eop_or_avg__(eop, "12M")
+            
+class MonthlyBrent(EIA):
 
+    def __init__(self):
+        super().__init__("PET.RBRTE.M")
 
+    @staticmethod
+    def string_to_date(date_string):
+        return __string_to_date__(date_string, "%Y%m") 
 
+class AnnualBrent(EIA):
 
+    @staticmethod
+    def string_to_date(date_string):
+        return  __string_to_date__(date_string, "%Y") 
+
+    def __init__(self):
+        super().__init__("PET.RBRTE.A")
+
+if __name__ == "__main__":
+    
+    assert Brent().filename == 'brent_daily.txt'
+    assert isinstance(Brent().series, pd.Series)
+    assert Brent().series['2016-02-16'] == 31.09
+    
+    # Brent().update()
+    # MonthlyBrent().update()
+    # AnnualBrent().update()
+    
+    brent = Brent().series
+    
+    brent_a_avg = Brent().annual()
+    brent_q_avg = Brent().quarterly()
+    brent_m_avg = Brent().monthly()
+
+    brent_a_eop = Brent().annual(eop = True)
+    brent_q_eop = Brent().quarterly(eop = True)
+    brent_m_eop = Brent().monthly(eop = True)
+    
+    ab = AnnualBrent().series
+    mb = MonthlyBrent().series
+    
     
 # ----------------------------------------------------------------------------------------------------------------
 #   API calls
