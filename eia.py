@@ -10,18 +10,10 @@
 
 # QUESTION: can class instance itself be Series object allowing ```brent = DailyBrent()```
 
-
-#from urllib.request import urlopen
 import json
 import pandas as pd
 import datetime
 import requests
-
-ACCESS_KEY = "15C0821C54636C57209B84FEEE3CE654"
-
-FILENAME_DICT = {'PET.RBRTE.D': 'brent_daily.txt'
-               , 'PET.RBRTE.M': 'brent_monthly.txt'
-               , 'PET.RBRTE.A': 'brent_annual.txt'}
 
 
 def __string_to_date__(date_string, fmt):
@@ -29,9 +21,14 @@ def __string_to_date__(date_string, fmt):
                
                
 class EIA():
+    
+    ACCESS_KEY = "15C0821C54636C57209B84FEEE3CE654"
 
+    FILENAME_DICT = {'PET.RBRTE.D': 'brent_daily.txt'
+                   , 'PET.RBRTE.M': 'brent_monthly.txt'
+                   , 'PET.RBRTE.A': 'brent_annual.txt'}
+    
     def update(self):
-       self.url = self.make_url(self.id)
        gen = self.yield_json_data(self.url)
        self.series = self.as_series(gen)
        self.save_csv()
@@ -43,10 +40,10 @@ class EIA():
         except:
             print("Cannot load from file: " + self.filename)
        
-    @staticmethod
-    def make_url(id, key = ACCESS_KEY):
+    @property
+    def url(self):
         """Valid API URL for *id* like 'PET.RBRTE.D' """
-        return "http://api.eia.gov/series/?api_key={0}&series_id={1}".format(key, id)    
+        return "http://api.eia.gov/series/?api_key={0}&series_id={1}".format(self.ACCESS_KEY, self.id)    
 
     @staticmethod
     def string_to_date(date_string):
@@ -69,8 +66,8 @@ class EIA():
     
     @property
     def filename(self):        
-        if self.id in FILENAME_DICT.keys():
-           return FILENAME_DICT[self.id]
+        if self.id in self.FILENAME_DICT.keys():
+           return self.FILENAME_DICT[self.id]
         else:
            return self.id + ".txt"
     
@@ -101,7 +98,9 @@ class Brent(EIA):
         else:
             return self.series.resample(ltr, how = 'mean')
     
-    
+    # 
+    # COMMENT: from pandas documentation - 
+    # 
     # http://pandas.pydata.org/pandas-docs/stable/timeseries.html#resampling
     # Any function available via dispatching can be given to the how parameter by name, including 
     # sum, mean, std, sem, max, min, median, first, last, ohlc.
@@ -129,12 +128,12 @@ class MonthlyBrent(EIA):
 
 class AnnualBrent(EIA):
 
+    def __init__(self):
+        super().__init__("PET.RBRTE.A")
+
     @staticmethod
     def string_to_date(date_string):
         return  __string_to_date__(date_string, "%Y") 
-
-    def __init__(self):
-        super().__init__("PET.RBRTE.A")
 
 if __name__ == "__main__":
     
@@ -142,6 +141,7 @@ if __name__ == "__main__":
     assert isinstance(Brent().series, pd.Series)
     assert Brent().series['2016-02-16'] == 31.09
     
+    # update local files using internet access:
     # Brent().update()
     # MonthlyBrent().update()
     # AnnualBrent().update()

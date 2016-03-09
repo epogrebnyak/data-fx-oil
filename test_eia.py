@@ -6,14 +6,14 @@ import datetime
 import eia
 
 def test_string_to_date():
-    assert eia.string_to_date("20150115") == datetime.date(2015,1,15)
+    assert eia.__string_to_date__("20150115", "%Y%m%d") == datetime.date(2015,1,15)
     
 def test_url():
     BRENT_URL = "http://api.eia.gov/series/?api_key=15C0821C54636C57209B84FEEE3CE654&series_id=PET.RBRTE.D"
     assert eia.EIA("PET.RBRTE.D").url == BRENT_URL   
 
-def test_with_internet():
-    brent = eia.DailyBrent().Series
+def test_single_value():
+    brent = eia.Brent().series
     assert brent['2016-02-16'] == 31.09
    
 # this is a truncated version of http://api.eia.gov/series/?api_key=15C0821C54636C57209B84FEEE3CE654&series_id=PET.RBRTE.D
