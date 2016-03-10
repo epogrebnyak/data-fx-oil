@@ -66,15 +66,11 @@ def download_er():
     url = make_url(start=None, end=None)
     gen = yield_date_and_usdrur(url)
     ts = as_series(gen)
-    try:
-       #divide values before 1997-12-30 by 1000
-       ix = ts.index < "1997-12-30"
-       ts[ix] = round(ts[ix] / 1000, 4)
-    except:
-       pass  
+    #divide values before 1997-12-30 by 1000
+    ix = ts.index <= "1997-12-30"
+    ts.loc[ix] = ts[ix] / 1000
     return ts.round(4)
 
-    
 def update_xml():
 
     def to_file(fn, string):
@@ -104,12 +100,14 @@ def get_er():
     
 def update():
     er = download_er()
+    assert er['1997-12-27'] == 5.95800 
     update_csv(er)    
     update_xml()
     df = get_saved_er()
     ts = df[df.columns[0]]
     # note: had problems with rounding, er and ts are at this point rounded to 4 digits   
     assert er.equals(ts)
+    
 
     
 # Need following wrapper class:

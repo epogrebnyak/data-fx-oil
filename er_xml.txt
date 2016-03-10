@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="windows-1251" ?>
-<ValCurs  ID="R01235" DateRange1="01.07.1992" DateRange2="06.03.2016"   name="Foreign Currency Market Dynamic">
+<ValCurs  ID="R01235" DateRange1="01.07.1992" DateRange2="09.03.2016"   name="Foreign Currency Market Dynamic">
 <Record Date="01.07.1992" Id="R01235"><Nominal>1</Nominal><Value>125,2600</Value></Record>
 <Record Date="03.07.1992" Id="R01235"><Nominal>1</Nominal><Value>134,8000</Value></Record>
 <Record Date="08.07.1992" Id="R01235"><Nominal>1</Nominal><Value>130,5000</Value></Record>

@@ -10,5 +10,20 @@
 from eia import Brent
 from cbr import get_er
 
-brent = Brent.series
+brent = Brent().series
 er = get_er()
+
+def png(ts, filename):
+    ax = ts.plot()
+    fig = ax.get_figure()
+    fig.savefig(filename)
+    
+png(brent, 'brent.png')
+png(er, 'er.png')
+
+# make dataframe
+# make scatter df.plot(x = , y = , type='scatter')
+# plot ruble value of oil 
+# find explaination why commodity currency moves with oil
+
+
