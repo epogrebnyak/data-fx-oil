@@ -10,5 +10,12 @@
 from eia import Brent
 from cbr import get_er
 
+# brent is end of day closing price - which exchange? which contract?
 brent = Brent.series
+
+# er is  Moscow time 11:30 am MOEX average USDRUR_TOM contract
 er = get_er()
+
+result = pd.concat([brent, er], axis=1)
+# plot scatter brent vs er
+#
