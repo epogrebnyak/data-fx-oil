@@ -142,7 +142,7 @@ if __name__ == "__main__":
     assert Brent().series['2016-02-16'] == 31.09
     
     # update local files using internet access:
-    # Brent().update()
+    Brent().update()
     # MonthlyBrent().update()
     # AnnualBrent().update()
     
