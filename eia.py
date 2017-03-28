@@ -1,5 +1,67 @@
 """ Download Brent FOB price time series from EIA API. """
 
+import json
+import pandas as pd
+import datetime
+import requests
+
+ACCESS_KEY = "15C0821C54636C57209B84FEEE3CE654"
+FILENAME_DICT = {'PET.RBRTE.D': 'brent_daily.txt'
+               , 'PET.RBRTE.M': 'brent_monthly.txt'
+               , 'PET.RBRTE.A': 'brent_annual.txt'}
+VALID_IDS = list(FILENAME_DICT.keys())
+
+def __string_to_date__(date_string, fmt):
+    return pd.to_datetime(datetime.datetime.strptime(date_string, fmt).date()) 
+
+def is_valid(_id):
+    """Ensure variable **_id** is in supported list""" 
+    if _id in VALID_IDS: 
+        return True
+    else: 
+        raise ValueError(_id)    
+               
+def make_url(_id):
+    """Return valid URL for data retrieval"""    
+    if is_valid(_id):    
+        return "http://api.eia.gov/series/?api_key={0}&series_id={1}".format(ACCESS_KEY, _id)    
+
+def make_filename(_id):        
+    if is_valid(_id):
+        return FILENAME_DICT[_id]
+        
+def yield_json_data(self, url):
+    """Stream data from url as pairs of date and values"""
+    r = requests.get(url)
+    json_data = json.loads(r.text)    
+    parsed_json_data = json_data["series"][0]["data"]
+    for row in parsed_json_data:
+        date = __string_to_date__(row[0], "%Y%m%d") 
+        price = float(row[1])
+        yield date, price    
+
+def get_data_by_id(_id):
+    url = make_url(_id)
+    gen = yield_json_data(url)
+    data_dicts = dict((date, price) for date, price in gen)
+    return pd.Series(data_dicts) 
+
+def get_filename(_id):
+    if is_valid(_id):
+        return FILENAME_DICT[_id]    
+    
+def get_local_data(_id):
+    filename = FILENAME_DICT[_id] 
+    df = pd.read_csv(filename, index_col = 0) 
+    df.index = pd.to_datetime(df.index)
+    return df.round(2)
+
+def save_local_data(_id, df):    
+    
+def        
+
+
+
 
 #### Critical:
 
@@ -10,15 +72,7 @@
 
 # QUESTION: can class instance itself be Series object allowing ```brent = DailyBrent()```
 
-import json
-import pandas as pd
-import datetime
-import requests
 
-
-def __string_to_date__(date_string, fmt):
-    return datetime.datetime.strptime(date_string, fmt).date() 
-               
                
 class EIA():
     

@@ -1,11 +1,11 @@
 import pandas as pd
-from eia import Brent
+from brent import DailyBrent
 from cbr import get_er
 
 # brent is end of day closing price - which exchange? which contract?
-brent = Brent().series
+brent = DailyBrent().get()
 
-# er is  Moscow time 11:30 am MOEX average USDRUR_TOM contract
+# er is  Moscow time 11:00-11:30 am MOEX average USDRUR_TOM contract
 er = get_er()
 
 def png(ts, filename):

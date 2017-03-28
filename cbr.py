@@ -108,7 +108,15 @@ def update():
     # note: had problems with rounding, er and ts are at this point rounded to 4 digits   
     assert er.equals(ts)
     
-
+if __name__ == "__main__":
+    er = download_er()
+    assert er['1997-12-27'] == 5.95800 
+    update_csv(er)    
+    update_xml()
+    df = get_saved_er()
+    ts = df[df.columns[0]]
+    # note: had problems with rounding, er and ts are at this point rounded to 4 digits   
+    assert er.equals(ts)
     
 # Need following wrapper class:
 # er = CBR_USDRUR().series # df[df.columns[0]]

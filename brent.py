@@ -6,9 +6,9 @@ import datetime
 import requests
 
 ACCESS_KEY = "15C0821C54636C57209B84FEEE3CE654"
-FILENAME_DICT = {'PET.RBRTE.D': 'brent_daily.txt'
-               , 'PET.RBRTE.M': 'brent_monthly.txt'
-               , 'PET.RBRTE.A': 'brent_annual.txt'}
+FILENAME_DICT = {'PET.RBRTE.D': ['brent_daily.txt', 'brent']
+               , 'PET.RBRTE.M': ['brent_monthly.txt', 'brent']
+               , 'PET.RBRTE.A': ['brent_annual.txt', 'brent']}
 VALID_IDS = list(FILENAME_DICT.keys())
 
 # -----------------------------------------------------------------------------
@@ -54,20 +54,20 @@ def get_data_as_series(_id):
 
 def get_filename(_id):
     if is_valid(_id):
-        return FILENAME_DICT[_id]  
+        return FILENAME_DICT[_id][0]  
     
 def get_local_data_as_series(_id):
     filename = get_filename(_id)
-    df = pd.read_csv(filename, index_col = 0) 
+    df = pd.read_csv(filename, index_col=0, header=None, names=['date', 'brent'])
     df.index = pd.to_datetime(df.index)
     df = df.round(2)    
-    return df[df.columns[0]]   
+    ts = df[df.columns[0]]   
+    return ts  
 
 def save_local_data(_id, df):
     filename = get_filename(_id)
-    df.to_csv(filename)  
+    df.to_csv(filename, header = False)
     
-
 # -----------------------------------------------------------------------------
     
 class LocalDataset():
@@ -88,7 +88,7 @@ class LocalDataset():
    
        
     def get(self):
-        return self.ts
+        return self.ts.rename(FILENAME_DICT[self._id][1]) 
 
     
 class DailyBrent(LocalDataset):
