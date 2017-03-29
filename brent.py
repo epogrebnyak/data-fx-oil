@@ -12,7 +12,8 @@ FILENAME_DICT = {'PET.RBRTE.D': ['brent_daily.txt', 'brent']
 VALID_IDS = list(FILENAME_DICT.keys())
 
 # -----------------------------------------------------------------------------
-# Simple checks
+# Data transform
+#
 
 def string_to_date(date_string):
     fmt = {4:'%Y', 6:"%Y%m", 8:"%Y%m%d"}[len(date_string)]    
@@ -26,8 +27,9 @@ def is_valid(_id):
         raise ValueError(_id)    
 
 # -----------------------------------------------------------------------------
-# Get EIA data
-               
+# Download data
+# 
+              
 def make_url(_id):
     """Return valid URL for data retrieval"""    
     if is_valid(_id):    
@@ -44,6 +46,7 @@ def yield_json_data(url):
         yield date, price    
 
 def get_data_as_series(_id):
+    """Get pd.Series"""
     url = make_url(_id)
     gen = yield_json_data(url)
     data_dicts = dict((date, price) for date, price in gen)
@@ -51,12 +54,14 @@ def get_data_as_series(_id):
 
 # -----------------------------------------------------------------------------
 # Local file operations
+#
 
-def get_filename(_id):
+def get_filename(_id):    
     if is_valid(_id):
         return FILENAME_DICT[_id][0]  
     
 def get_local_data_as_series(_id):
+    """Return data from local file"""
     filename = get_filename(_id)
     df = pd.read_csv(filename, index_col=0, header=None, names=['date', 'brent'])
     df.index = pd.to_datetime(df.index)
@@ -65,6 +70,7 @@ def get_local_data_as_series(_id):
     return ts  
 
 def save_local_data(_id, df):
+    """Save to local file"""
     filename = get_filename(_id)
     df.to_csv(filename, header = False)
     

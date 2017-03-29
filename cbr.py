@@ -5,9 +5,8 @@ import datetime
 import requests
 import xml.etree.ElementTree as ET
 
-CSV_FILENAME = "er.txt"
-ER_VARNAME = "CBR_USDRUR"
-
+CSV_FILENAME = "cbr_er.txt"
+ER_VARNAME = "USDRUR"
   
 def _dt(s):
     return datetime.datetime.strptime(s,"%d.%m.%Y")
@@ -17,7 +16,7 @@ def yield_date_and_usdrur(url):
     root = ET.fromstring(r.text)
     for child in root:
         date_as_string = child.attrib['Date']
-        # note: starting 02.06.1993 there are values like "2 153,0000"
+        # starting 02.06.1993 there are values like "2 153,0000"
         value_as_string = child[1].text.replace(",",".").replace(chr(160),"")
         try:
             yield _dt(date_as_string), float(value_as_string)
@@ -46,13 +45,13 @@ def make_url(start=None, end=None):
     URL = 'http://www.cbr.ru/scripts/XML_dynamic.asp?date_req1={0}&date_req2={1}&VAL_NM_RQ=R01235'
     return URL.format(s, e)
 
-# todo move asserts to tests   
-def test_make_url():    
-    start = datetime.date(2001,3,2)
-    end = datetime.date(2001,3,14)   
-    target_url = 'http://www.cbr.ru/scripts/XML_dynamic.asp?date_req1=02/03/2001&date_req2=14/03/2001&VAL_NM_RQ=R01235'
-    assert target_url ==  make_url(start, end)
+# TODO 1 - move asserts to tests   
 
+# def test_make_url():    
+#    start = datetime.date(2001,3,2)
+#    end = datetime.date(2001,3,14)   
+#    target_url = 'http://www.cbr.ru/scripts/XML_dynamic.asp?date_req1=02/03/2001&date_req2=14/03/2001&VAL_NM_RQ=R01235'
+#    assert target_url ==  make_url(start, end)
    
 def download_er():
     url = make_url()
@@ -70,22 +69,46 @@ def save_to_csv(ts):
 def get_saved_er():
     df = pd.read_csv(CSV_FILENAME, index_col = 0) 
     df.index = pd.to_datetime(df.index)
-    return df.round(4)
+    return df[df.columns[0]].round(4)
     
 def get_er():
     return get_saved_er()    
+
+# TODO 2 - move asserts to tests   
+   
+#def update():
+#    er = download_er()
+#    assert er['1997-12-27'] == 5.95800 
+#    save_to_csv(er)    
+#    df = get_saved_er()
+#    ts = df[df.columns[0]]
+#    # note: had problems with rounding, er and ts are at this point rounded to 4 digits   
+#    assert er.equals(ts)
+#    return ts   
     
-def update():
-    er = download_er()
-    assert er['1997-12-27'] == 5.95800 
-    save_to_csv(er)    
-    df = get_saved_er()
-    ts = df[df.columns[0]]
-    # note: had problems with rounding, er and ts are at this point rounded to 4 digits   
-    assert er.equals(ts)
+
+class Ruble():    
+    
+    def __init__(self):                
+        try:
+            self.ts = get_saved_er()
+        except FileNotFoundError:
+            print("Cannot load from local file, updating...")
+            self.update()
+      
+    def update(self):
+        self.ts = download_er()
+        save_to_csv(self.ts)    
+        return self
+        
+    def get(self):
+        return self.ts    
+    
     
 if __name__ == "__main__":
-    pass
+    er = Ruble().get()
+    print(er.tail())
+    # Ruble().update()
 
 
 # caching ---------------------------------------------------------------------
