@@ -71,12 +71,12 @@ plt.style.use('seaborn-darkgrid')
 #time3.set_xlabel("Year")
 #time3.set_ylabel("Oil price, rub/b")
 
-plt.clf() #clears the entire current figure 
-plt.figure(2, figsize=(30, 10), dpi=80)
-scatter1 = df.plot.scatter(x='brent', y='er', marker = ".")
-scatter1.set_xlabel(x_axis_name)
-scatter1.set_ylabel(y_axis_name)
-scatter1.set_title(plot_title)
+#plt.clf() #clears the entire current figure 
+#plt.figure(2, figsize=(30, 10), dpi=80)
+#scatter1 = df.plot.scatter(x='brent', y='er', marker = ".")
+#scatter1.set_xlabel(x_axis_name)
+#scatter1.set_ylabel(y_axis_name)
+#scatter1.set_title(plot_title)
 
 
 ###############################################################################

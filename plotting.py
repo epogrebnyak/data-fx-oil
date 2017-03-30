@@ -7,6 +7,7 @@ Created on Wed Mar 29 16:28:26 2017
 
 import pandas as pd
 import matplotlib.pyplot as plt
+import bokeh.charts as bh
 
 # dataframe
 df= pd.read_csv("daily_rub_oil.txt", header=0, index_col=0)
@@ -63,20 +64,37 @@ scatter1.set_ylabel(y_axis_name)
 scatter1.set_title(plot_title)
 
 
+# -----------------------------------------------------------------------------
+#
+#    Bokeh charts*3
+#
+# -----------------------------------------------------------------------------
+
+p = bh.Scatter(df, x='brent', y='er', title="Oil vs ruble, 2007-2016",
+               xlabel=x_axis_name , ylabel=y_axis_name, color ='blue')
+bh.output_file("scatter.html")
+bh.show(p)
+
+# -----------------------------------------------------------------------------
+#
+#    Save as csv and xlsx
+#
+# -----------------------------------------------------------------------------
+
+
 if len(df.columns) == 3:
    df=df.drop(df.columns[0], axis=1)
 df = df.round(4)
 df.to_csv("fx.csv")
 df.to_excel("fx.xlsx")
 
-#plt.legend(loc='upper left');
-#plt.show()
 
 
-
-
-
-###############################################################################
+# -----------------------------------------------------------------------------
+#
+#    Questions
+#
+# -----------------------------------------------------------------------------
 
 
 # Q4: how do I control labels order - which label is for which line
@@ -102,7 +120,3 @@ df.to_excel("fx.xlsx")
 #ax = df.plot(x='brent', y='er', kind='scatter')
 #fig = ax.get_figure()
 #fig.savefig('scatter.png')
-
-
-
-
