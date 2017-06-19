@@ -1,4 +1,4 @@
-""" Download USD RUR exchange rate from Bank of Russia web site."""
+""" Download USD RUR official exchange rate from Bank of Russia web site."""
 
 import pandas as pd
 import datetime
@@ -8,25 +8,33 @@ import xml.etree.ElementTree as ET
 CSV_FILENAME = "cbr_er.txt"
 ER_VARNAME = "USDRUR"
   
-def _dt(s):
+def as_date(s):
     return datetime.datetime.strptime(s,"%d.%m.%Y")
+
+def parse(string):
+    # starting 02.06.1993 there are values like "2 153,0000"
+    return string.replace(",",".").replace(chr(160),"")
 
 def yield_date_and_usdrur(url):
     r = requests.get(url)
     root = ET.fromstring(r.text)
     for child in root:
-        date_as_string = child.attrib['Date']
-        # starting 02.06.1993 there are values like "2 153,0000"
-        value_as_string = child[1].text.replace(",",".").replace(chr(160),"")
+        date_as_string = child.attrib['Date']        
+        value_as_string = parse(child[1].text)
         try:
-            yield _dt(date_as_string), float(value_as_string)
+            yield as_date(date_as_string), float(value_as_string)
         except:
-            raise ValueError(value_as_string.__repr__()+" at date "+date_as_string.__repr__())    
+            v = value_as_string.__repr__()
+            d = date_as_string.__repr__()
+            raise ValueError("Error parsing value <{}> at date <{}>".format(v,d))    
            
-def _fmt(dt):
-    return dt.strftime('%d/%m/%Y')   
 
 def make_date_range(start, end):
+    """Return data range from 01/07/1992 to today or shorter"""
+    
+    def _fmt(dt):
+        return dt.strftime('%d/%m/%Y')  
+    
     #start date
     if start:
         s = _fmt(start)
@@ -36,8 +44,7 @@ def make_date_range(start, end):
     if end:    
         e = _fmt(end)
     else:
-        e = _fmt(datetime.datetime.today())
-    
+        e = _fmt(datetime.datetime.today())    
     return s, e
 
 def make_url(start=None, end=None):   
@@ -56,8 +63,8 @@ def make_url(start=None, end=None):
 def download_er():
     url = make_url()
     gen = yield_date_and_usdrur(url)
-    _dicts = dict((pd.to_datetime(date), price) for date, price in gen)
-    ts = pd.Series(_dicts, name = ER_VARNAME)
+    d = {pd.to_datetime(date): price for date, price in gen}
+    ts = pd.Series(d, name = ER_VARNAME)
     #divide values before 1997-12-30 by 1000
     ix = ts.index <= "1997-12-30"
     ts.loc[ix] = ts[ix] / 1000
@@ -71,8 +78,6 @@ def get_saved_er():
     df.index = pd.to_datetime(df.index)
     return df[df.columns[0]].round(4)
     
-def get_er():
-    return get_saved_er()    
 
 # TODO 2 - move asserts to tests   
    
@@ -107,10 +112,11 @@ class Ruble():
     
 if __name__ == "__main__":
     er = Ruble().get()
+    assert er['2017-06-10'] == 57.0020
     print(er.tail())
     # Ruble().update()
 
-
+# FIXME: may introduce caching here
 # caching ---------------------------------------------------------------------
 
 def update_xml():
